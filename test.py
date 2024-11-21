@@ -5,6 +5,7 @@ clear_old_data_time = 60
 
 def ClearOldData():
     print("data cleared")
+    print("DONE")
 
 def StartClearData():
     while True:
