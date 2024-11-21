@@ -1,16 +1,15 @@
-import random
-import json
-import copy
+import random, time, json, copy, threading
 import nextcord
 from nextcord import Interaction
 from nextcord.ext import commands
+from datetime import datetime
 
 from .keys import *
 
 allowed_mentions = nextcord.AllowedMentions(everyone = True)
 
-data_file_path = "bot_data\data.json"
-comps_list_path = "bot_data\comps_list.json"
+data_file_path = "bot_data/data.json"
+comps_list_path = "bot_data/comps_list.json"
 comps_list_data = []
 contents_list_data = []
 
@@ -244,6 +243,32 @@ def TimeFormating(raid_time_utc:str):
     raid_time_msk = temporary_raid_time_msk + ":" + str(splited_time[1])
 
     return str(raid_time_utc), str(raid_time_msk)
+
+def ClearOldData():
+    current_date = datetime.utcnow().strftime('%d-%m-%Y').split("-")
+    with open(data_file_path, "r") as data:
+            contents_list_data = json.load(data)
+
+    content_to_delete = []
+
+    for i in range(len(contents_list_data)):
+        content_date = contents_list_data[i]["content_date"].split(".")
+        if current_date[2] > content_date[2]:
+            content_to_delete.append(contents_list_data[i]["content_id"])
+        if current_date[2] == content_date[2] and current_date[1] > content_date[1]:
+            content_to_delete.append(contents_list_data[i]["content_id"])
+        if current_date[2] == content_date[2] and current_date[1] == content_date[1] and current_date[0] > content_date[0]:
+            content_to_delete.append(contents_list_data[i]["content_id"])
+    
+    for i in range(len(content_to_delete)):
+        CancelContent(content_id=content_to_delete[i])     
+
+    print(f"OLD data cleared, {len(content_to_delete)}  contents deleted!")
+
+def StartClearData():
+    while True:
+        time.sleep(clear_old_data_time)
+        ClearOldData()
 
 # Add new content to all contents list JSON file 
 def AddNewComp(content_title:str, roles:str, comp_creator_id:int):
@@ -1066,4 +1091,5 @@ class Content(commands.Cog):
 
 
 def setup(client):
+    threading.Thread(target=StartClearData).start()
     client.add_cog(Content(client))

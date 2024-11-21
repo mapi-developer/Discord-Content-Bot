@@ -1,1 +1,1 @@
-Discord Content Bots
+Discord Content Bot
